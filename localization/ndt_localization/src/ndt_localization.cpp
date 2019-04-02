@@ -50,7 +50,7 @@ bool NDTLocalization::init()
         ROS_WARN_STREAM("Forbid odom");
     }
 
-    pnh_.param<double>("predict_error_thresh", param_predict_error_thresh_, 0.5);
+    pnh_.param<double>("predict_error_thresh", param_predict_error_thresh_, 0.4);
     pnh_.param<double>("ndt_resolution", param_ndt_resolution_, 1.0);
     pnh_.param<int>("ndt_max_iterations", param_ndt_max_iterations_, 25);
     pnh_.param<double>("ndt_step_size", param_ndt_step_size_, 0.1);
@@ -205,6 +205,28 @@ void NDTLocalization::init_pose_with_param()
     std::cout << "  init_yaw: " << initial_pose_.yaw << std::endl;
     ROS_INFO("Current pose initialized.");
 }
+
+// void NDTLocalization::initialPoseWithGNSS(const geometry_msgs::PoseStamped::ConstPtr& msg)
+// {
+//     ROS_INFO("Init pose with GNSS");
+//     double p = 2;
+
+//     if (msg->header.frame_id != param_map_frame_) {
+//         ROS_WARN("Please initialize pose under %s frame.", param_map_frame_.c_str());
+//         pose_init_ = false;
+//         return;
+//     }
+//     geometryPose2Pose(msg->pose.pose, initial_pose_);
+
+//     pre_pose_ = pre_pose_odom_ = current_pose_odom_ = current_pose_ = initial_pose_;
+//     pose_init_ = true;
+
+//     offset_odom_.reset();
+//     offset_imu_.reset();
+//     if (param_debug_) {
+//         rawodom_init_ = false;
+//     }
+// }
 
 /**
  * @brief 1. caculate pdf(mean, covariance) for each voxel grid in model

@@ -33,7 +33,7 @@ odom_topic: "/odomImu/odom_imu"
 tf_timeout: 1.0 # time waiting for available tf --timeout result breakdown
 odom_timeout: 1.5 # time waiting for next odom msg, too long means large uncertainty --timeout result "useless info"
 
-predict_error_thresh: 1.5
+predict_error_thresh: 0.5
 
 voxel_leaf_size: 1.5
 ndt_resolution: 1.0
