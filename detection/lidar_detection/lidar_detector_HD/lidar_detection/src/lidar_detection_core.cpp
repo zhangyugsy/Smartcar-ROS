@@ -13,7 +13,7 @@ void lidar_detect::init()
 #endif
 
     _pub_cluster_cloud = nh.advertise<sensor_msgs::PointCloud2>("/points_cluster", 1);
-    _pub_ground_cloud = nh.advertise<sensor_msgs::PointCloud2>("/points_ground", 1);
+    // _pub_ground_cloud = nh.advertise<sensor_msgs::PointCloud2>("/points_ground", 1);
     _centroid_pub = nh.advertise<autoware_msgs::Centroids>("/cluster_centroids", 1);
     _pub_clusters_message = nh.advertise<autoware_msgs::CloudClusterArray>("/detection/lidar_detector/cloud_clusters", 1);
     _pub_detected_objects = nh.advertise<autoware_msgs::DetectedObjectArray>("/detection/lidar_detector/objects", 1);
@@ -83,14 +83,14 @@ void lidar_detect::init()
 void lidar_detect::velodyne_callback(const sensor_msgs::PointCloud2ConstPtr& in_sensor_cloud)
 {
     //_start = std::chrono::system_clock::now();
-    static bool _using_sensor_cloud = true;
+    static bool _using_sensor_cloud = false;
 
     if (!_using_sensor_cloud) {
         _using_sensor_cloud = true;
 
         // pcl::PointCloud<pcl::PointXYZ>::Ptr current_sensor_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
         // pcl::PointCloud<pcl::PointXYZ>::Ptr removed_points_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-        // pcl::PointCloud<pcl::PointXYZ>::Ptr downsampled_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZ>::Ptr downsampled_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
         // pcl::PointCloud<pcl::PointXYZ>::Ptr inlanes_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::PointCloud<pcl::PointXYZ>::Ptr nofloor_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::PointCloud<pcl::PointXYZ>::Ptr onlyfloor_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
@@ -111,10 +111,10 @@ void lidar_detect::velodyne_callback(const sensor_msgs::PointCloud2ConstPtr& in_
         // } else
         //     removed_points_cloud_ptr = current_sensor_cloud_ptr;
 
-        // if (_downsample_cloud)
-        //     downsampleCloud(removed_points_cloud_ptr, downsampled_cloud_ptr, _leaf_size);
-        // else
-        //     downsampled_cloud_ptr = removed_points_cloud_ptr;
+        if (_downsample_cloud)
+            downsampleCloud(nofloor_cloud_ptr, downsampled_cloud_ptr, _leaf_size);
+        else
+            downsampled_cloud_ptr = nofloor_cloud_ptr;
 
         // clipCloud(downsampled_cloud_ptr, clipped_cloud_ptr, _clip_min_height, _clip_max_height);
 
@@ -132,7 +132,7 @@ void lidar_detect::velodyne_callback(const sensor_msgs::PointCloud2ConstPtr& in_
         // publishCloud(&_pub_points_lanes_cloud, nofloor_cloud_ptr);
 
         if (_use_diffnormals) // ????
-            differenceNormalsSegmentation(nofloor_cloud_ptr, diffnormals_cloud_ptr);
+            differenceNormalsSegmentation(downsampled_cloud_ptr, diffnormals_cloud_ptr);
         else
             diffnormals_cloud_ptr = nofloor_cloud_ptr;
 
@@ -152,6 +152,15 @@ void lidar_detect::velodyne_callback(const sensor_msgs::PointCloud2ConstPtr& in_
 
         _using_sensor_cloud = false;
     }
+}
+
+void lidar_detect::downsampleCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud_ptr,
+    pcl::PointCloud<pcl::PointXYZ>::Ptr out_cloud_ptr, float in_leaf_size)
+{
+    pcl::VoxelGrid<pcl::PointXYZ> sor;
+    sor.setInputCloud(in_cloud_ptr);
+    sor.setLeafSize((float)in_leaf_size, (float)in_leaf_size, (float)in_leaf_size);
+    sor.filter(*out_cloud_ptr);
 }
 
 void lidar_detect::differenceNormalsSegmentation(const pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud_ptr,
