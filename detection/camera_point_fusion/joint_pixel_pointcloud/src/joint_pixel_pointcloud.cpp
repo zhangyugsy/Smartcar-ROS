@@ -84,15 +84,17 @@ void PixelCloudFusion::CloudCallback(const sensor_msgs::PointCloud2::ConstPtr& c
         return;
     }
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud_msg(new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::fromROSMsg(*cloud_msg, *in_cloud_msg);
-
-    pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud_clipped(new pcl::PointCloud<pcl::PointXYZ>);
-    clipCloud(in_cloud_msg, in_cloud_clipped, clip_height, clip_dis, clip_far, clip_left_right_dis);
-
+    //pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud_msg(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::PointCloud<pcl::PointXYZ>::Ptr only_floor(new pcl::PointCloud<pcl::PointXYZ>);
-    removeFloorRayFiltered(in_cloud_clipped, only_floor, in_cloud, sensor_height, local_slope_threshold, general_slope_threshhold);
+    //pcl::fromROSMsg(*cloud_msg, *in_cloud_msg);
+    pcl::fromROSMsg(*cloud_msg, *in_cloud);
+
+    //pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud_clipped(new pcl::PointCloud<pcl::PointXYZ>);
+    //clipCloud(in_cloud_msg, in_cloud_clipped, clip_height, clip_dis, clip_far, clip_left_right_dis);
+    
+    //pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    //pcl::PointCloud<pcl::PointXYZ>::Ptr only_floor(new pcl::PointCloud<pcl::PointXYZ>);
+    //removeFloorRayFiltered(in_cloud_clipped, only_floor, in_cloud, sensor_height, local_slope_threshold, general_slope_threshhold);
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr out_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
     // pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud(new pcl::PointCloud<pcl::PointXYZ>);
