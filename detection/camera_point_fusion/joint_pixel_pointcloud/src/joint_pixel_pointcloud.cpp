@@ -4,11 +4,11 @@
  * @Github: https://github.com/sunmiaozju
  * @LastEditors: sunm
  * @Date: 2019-02-21 21:34:40
- * @LastEditTime: 2019-03-25 15:13:13
+ * @LastEditTime: 2019-04-03 17:55:29
  */
 #include "joint_pixel_pointcloud.h"
-#include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
+#include <image_transport/image_transport.h>
 
 using namespace NODE_JOINT_PIXEL_POINTCLOUD;
 
@@ -28,7 +28,7 @@ void PixelCloudFusion::ImageCallback(const sensor_msgs::Image::ConstPtr& image_m
 
     static image_transport::ImageTransport it(nh);
     static image_transport::Publisher pub_image = it.advertise("identified_image", 1);
-    static sensor_msgs::ImagePtr msg; 
+    static sensor_msgs::ImagePtr msg;
     msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", current_frame).toImageMsg();
     pub_image.publish(msg);
 
@@ -91,7 +91,7 @@ void PixelCloudFusion::CloudCallback(const sensor_msgs::PointCloud2::ConstPtr& c
 
     //pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud_clipped(new pcl::PointCloud<pcl::PointXYZ>);
     //clipCloud(in_cloud_msg, in_cloud_clipped, clip_height, clip_dis, clip_far, clip_left_right_dis);
-    
+
     //pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud(new pcl::PointCloud<pcl::PointXYZ>);
     //pcl::PointCloud<pcl::PointXYZ>::Ptr only_floor(new pcl::PointCloud<pcl::PointXYZ>);
     //removeFloorRayFiltered(in_cloud_clipped, only_floor, in_cloud, sensor_height, local_slope_threshold, general_slope_threshhold);
@@ -152,7 +152,7 @@ void PixelCloudFusion::CloudCallback(const sensor_msgs::PointCloud2::ConstPtr& c
     publishObjs();
 
     sensor_msgs::PointCloud2 test_point;
-    pcl::toROSMsg(*in_cloud_msg, test_point);
+    pcl::toROSMsg(*in_cloud, test_point);
     test_point.header = cloud_msg->header;
     test_pointcloud.publish(test_point);
 
