@@ -4,11 +4,9 @@
  * @Github: https://github.com/sunmiaozju
  * @LastEditors: sunm
  * @Date: 2019-02-21 21:34:40
- * @LastEditTime: 2019-04-03 17:55:29
+ * @LastEditTime: 2019-04-04 09:58:38
  */
 #include "joint_pixel_pointcloud.h"
-#include <cv_bridge/cv_bridge.h>
-#include <image_transport/image_transport.h>
 
 using namespace NODE_JOINT_PIXEL_POINTCLOUD;
 
@@ -26,11 +24,9 @@ void PixelCloudFusion::ImageCallback(const sensor_msgs::Image::ConstPtr& image_m
     // 使用相机内参和畸变系数可以图像去畸变
     cv::undistort(image, current_frame, camera_instrinsics, distortion_coefficients);
 
-    static image_transport::ImageTransport it(nh);
-    static image_transport::Publisher pub_image = it.advertise("identified_image", 1);
     static sensor_msgs::ImagePtr msg;
     msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", current_frame).toImageMsg();
-    pub_image.publish(msg);
+    pub_identified_image.publish(msg);
 
     image_frame_id = image_msg->header.frame_id;
     image_size.height = current_frame.rows;
@@ -559,6 +555,7 @@ void PixelCloudFusion::initROS()
     test_pointcloud = nh.advertise<sensor_msgs::PointCloud2>(test_cloud_topic, 1);
     objs_pub_rviz = nh.advertise<visualization_msgs::MarkerArray>("fusion_objs_rviz", 1);
     objs_pub = nh.advertise<smartcar_msgs::DetectedObjectArray>("fusion_objs", 1);
+    pub_identified_image = image_trans.advertise("identified_image", 1);
 }
 
 PixelCloudFusion::PixelCloudFusion()
@@ -567,6 +564,7 @@ PixelCloudFusion::PixelCloudFusion()
     , camera_info_ok_(false)
     , usingObjs(false)
     , image_frame_id("")
+    , image_trans(nh)
 {
     initROS();
 }

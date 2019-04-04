@@ -4,7 +4,7 @@
  * @Github: https://github.com/sunmiaozju
  * @LastEditors: sunm
  * @Date: 2019-02-21 21:41:21
- * @LastEditTime: 2019-03-15 15:04:04
+ * @LastEditTime: 2019-04-04 09:56:07
  */
 #ifndef NODE_JOINT_PIXEL_POINTCLOUD_H
 #define NODE_JOINT_PIXEL_POINTCLOUD_H
@@ -47,6 +47,9 @@
 #include <opencv2/opencv.hpp>
 #include <pcl/PCLPointCloud2.h>
 #include <pcl_ros/point_cloud.h>
+
+#include <cv_bridge/cv_bridge.h>
+#include <image_transport/image_transport.h>
 
 namespace NODE_JOINT_PIXEL_POINTCLOUD {
 
@@ -123,6 +126,9 @@ class PixelCloudFusion {
     float fx, fy, cx, cy;
 
     pcl::PointCloud<pcl::PointXYZRGB> colored_cloud;
+
+    image_transport::ImageTransport image_trans;
+    image_transport::Publisher pub_identified_image;
 
     void ImageCallback(const sensor_msgs::Image::ConstPtr& image_msg);
 
