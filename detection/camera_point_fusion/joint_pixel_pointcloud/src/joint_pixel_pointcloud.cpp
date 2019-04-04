@@ -4,11 +4,9 @@
  * @Github: https://github.com/sunmiaozju
  * @LastEditors: sunm
  * @Date: 2019-02-21 21:34:40
- * @LastEditTime: 2019-03-25 15:13:13
+ * @LastEditTime: 2019-04-04 09:58:38
  */
 #include "joint_pixel_pointcloud.h"
-#include <image_transport/image_transport.h>
-#include <cv_bridge/cv_bridge.h>
 
 using namespace NODE_JOINT_PIXEL_POINTCLOUD;
 
@@ -26,11 +24,9 @@ void PixelCloudFusion::ImageCallback(const sensor_msgs::Image::ConstPtr& image_m
     // 使用相机内参和畸变系数可以图像去畸变
     cv::undistort(image, current_frame, camera_instrinsics, distortion_coefficients);
 
-    static image_transport::ImageTransport it(nh);
-    static image_transport::Publisher pub_image = it.advertise("identified_image", 1);
-    static sensor_msgs::ImagePtr msg; 
+    static sensor_msgs::ImagePtr msg;
     msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", current_frame).toImageMsg();
-    pub_image.publish(msg);
+    pub_identified_image.publish(msg);
 
     image_frame_id = image_msg->header.frame_id;
     image_size.height = current_frame.rows;
@@ -91,7 +87,7 @@ void PixelCloudFusion::CloudCallback(const sensor_msgs::PointCloud2::ConstPtr& c
 
     //pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud_clipped(new pcl::PointCloud<pcl::PointXYZ>);
     //clipCloud(in_cloud_msg, in_cloud_clipped, clip_height, clip_dis, clip_far, clip_left_right_dis);
-    
+
     //pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud(new pcl::PointCloud<pcl::PointXYZ>);
     //pcl::PointCloud<pcl::PointXYZ>::Ptr only_floor(new pcl::PointCloud<pcl::PointXYZ>);
     //removeFloorRayFiltered(in_cloud_clipped, only_floor, in_cloud, sensor_height, local_slope_threshold, general_slope_threshhold);
@@ -152,7 +148,7 @@ void PixelCloudFusion::CloudCallback(const sensor_msgs::PointCloud2::ConstPtr& c
     publishObjs();
 
     sensor_msgs::PointCloud2 test_point;
-    pcl::toROSMsg(*in_cloud_msg, test_point);
+    pcl::toROSMsg(*in_cloud, test_point);
     test_point.header = cloud_msg->header;
     test_pointcloud.publish(test_point);
 
@@ -559,6 +555,7 @@ void PixelCloudFusion::initROS()
     test_pointcloud = nh.advertise<sensor_msgs::PointCloud2>(test_cloud_topic, 1);
     objs_pub_rviz = nh.advertise<visualization_msgs::MarkerArray>("fusion_objs_rviz", 1);
     objs_pub = nh.advertise<smartcar_msgs::DetectedObjectArray>("fusion_objs", 1);
+    pub_identified_image = image_trans.advertise("identified_image", 1);
 }
 
 PixelCloudFusion::PixelCloudFusion()
@@ -567,6 +564,7 @@ PixelCloudFusion::PixelCloudFusion()
     , camera_info_ok_(false)
     , usingObjs(false)
     , image_frame_id("")
+    , image_trans(nh)
 {
     initROS();
 }

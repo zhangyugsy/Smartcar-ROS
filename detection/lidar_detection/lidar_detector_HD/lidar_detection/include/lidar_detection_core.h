@@ -95,7 +95,7 @@ class lidar_detect {
 private:
     ros::NodeHandle nh, pnh;
     ros::Publisher _pub_cluster_cloud;
-    ros::Publisher _pub_ground_cloud;
+    // ros::Publisher _pub_ground_cloud;
     ros::Publisher _centroid_pub;
     ros::Publisher _pub_clusters_message;
     ros::Publisher _pub_detected_objects;
@@ -139,6 +139,9 @@ private:
     tf::StampedTransform* _transform;
 
     void velodyne_callback(const sensor_msgs::PointCloud2ConstPtr& in_sensor_cloud);
+
+    void downsampleCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud_ptr,
+        pcl::PointCloud<pcl::PointXYZ>::Ptr out_cloud_ptr, float in_leaf_size = 0.2);
 
     void differenceNormalsSegmentation(const pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud_ptr,
         pcl::PointCloud<pcl::PointXYZ>::Ptr out_cloud_ptr);
