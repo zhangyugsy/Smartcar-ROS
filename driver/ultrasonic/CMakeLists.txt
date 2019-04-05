@@ -21,10 +21,10 @@ include_directories(
 
 add_executable(ultrasonic_single
                src/ultrasonic-single.cpp
-               src/jetsonGPIO.c
+               src/jetsonGPIO.cpp
                include/jetsonGPIO.h)
 
-add_executable(ultrasonic_dual
-               src/ultrasonic-dual.cpp
-               src/jetsonGPIO.c
-               include/jetsonGPIO.h)
+# add_executable(ultrasonic_dual
+#                src/ultrasonic-dual.cpp
+#                src/jetsonGPIO.c
+#                include/jetsonGPIO.h)
