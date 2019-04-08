@@ -4,7 +4,7 @@
  * @Github: https://github.com/sunmiaozju
  * @LastEditors: sunm
  * @Date: 2019-03-01 11:25:55
- * @LastEditTime: 2019-03-12 10:00:33
+ * @LastEditTime: 2019-04-04 11:03:38
  */
 
 #include "lidar_euclidean_cluster.h"
@@ -148,6 +148,101 @@ void LidarClusterDetector::segmentByDistance(const pcl::PointCloud<pcl::PointXYZ
     for (size_t i = 0; i < cloud_segments_array.size(); i++) {
         clusterCpu(cloud_segments_array[i], clusters, seg_distances[i]);
     }
+}
+
+void LidarClusterDetector::checkClusterMerge(size_t in_cluster_id, std::vector<ClusterPtr>& in_clusters,
+    std::vector<bool>& in_out_visited_clusters, std::vector<size_t>& out_merge_indices,
+    double in_merge_threshold)
+{
+    // std::cout << "checkClusterMerge" << std::endl;
+    pcl::PointXYZ point_a = in_clusters[in_cluster_id]->GetCentroid();
+    for (size_t i = 0; i < in_clusters.size(); i++) {
+        if (i != in_cluster_id && !in_out_visited_clusters[i]) {
+            pcl::PointXYZ point_b = in_clusters[i]->GetCentroid();
+            double distance = sqrt(pow(point_b.x - point_a.x, 2) + pow(point_b.y - point_a.y, 2));
+            if (distance <= in_merge_threshold) {
+                in_out_visited_clusters[i] = true;
+                out_merge_indices.push_back(i);
+                // std::cout << "Merging " << in_cluster_id << " with " << i << " dist:" << distance << std::endl;
+                checkClusterMerge(i, in_clusters, in_out_visited_clusters, out_merge_indices, in_merge_threshold);
+            }
+        }
+    }
+}
+
+void LidarClusterDetector::mergeClusters(const std::vector<ClusterPtr>& in_clusters, std::vector<ClusterPtr>& out_clusters,
+    std::vector<size_t> in_merge_indices, const size_t& current_index,
+    std::vector<bool>& in_out_merged_clusters)
+{
+    // std::cout << "mergeClusters:" << in_merge_indices.size() << std::endl;
+    pcl::PointCloud<pcl::PointXYZRGB> sum_cloud;
+    pcl::PointCloud<pcl::PointXYZ> mono_cloud;
+    ClusterPtr merged_cluster(new Cluster());
+    for (size_t i = 0; i < in_merge_indices.size(); i++) {
+        sum_cloud += *(in_clusters[in_merge_indices[i]]->GetCloud());
+        in_out_merged_clusters[in_merge_indices[i]] = true;
+    }
+    std::vector<int> indices(sum_cloud.points.size(), 0);
+    for (size_t i = 0; i < sum_cloud.points.size(); i++) {
+        indices[i] = i;
+    }
+
+    if (sum_cloud.points.size() > 0) {
+        pcl::copyPointCloud(sum_cloud, mono_cloud);
+        merged_cluster->SetCloud(mono_cloud.makeShared(), indices, _velodyne_header, current_index,
+            (int)_colors[current_index].val[0], (int)_colors[current_index].val[1],
+            (int)_colors[current_index].val[2], "", _pose_estimation);
+        out_clusters.push_back(merged_cluster);
+    }
+}
+
+void LidarClusterDetector::checkAllForMerge(std::vector<ClusterPtr>& in_clusters, std::vector<ClusterPtr>& out_clusters,
+    float in_merge_threshold)
+{
+    // std::cout << "checkAllForMerge" << std::endl;
+    std::vector<bool> visited_clusters(in_clusters.size(), false);
+    std::vector<bool> merged_clusters(in_clusters.size(), false);
+    size_t current_index = 0;
+    for (size_t i = 0; i < in_clusters.size(); i++) {
+        if (!visited_clusters[i]) {
+            visited_clusters[i] = true;
+            std::vector<size_t> merge_indices;
+            checkClusterMerge(i, in_clusters, visited_clusters, merge_indices, in_merge_threshold);
+            mergeClusters(in_clusters, out_clusters, merge_indices, current_index++, merged_clusters);
+        }
+    }
+    for (size_t i = 0; i < in_clusters.size(); i++) {
+        // check for clusters not merged, add them to the output
+        if (!merged_clusters[i]) {
+            out_clusters.push_back(in_clusters[i]);
+        }
+    }
+
+    // ClusterPtr cluster(new Cluster());
+}
+checkAllForMerge(std::vector<ClusterPtr>& in_clusters, std::vector<ClusterPtr>& out_clusters,
+    float in_merge_threshold)
+{
+    // std::cout << "checkAllForMerge" << std::endl;
+    std::vector<bool> visited_clusters(in_clusters.size(), false);
+    std::vector<bool> merged_clusters(in_clusters.size(), false);
+    size_t current_index = 0;
+    for (size_t i = 0; i < in_clusters.size(); i++) {
+        if (!visited_clusters[i]) {
+            visited_clusters[i] = true;
+            std::vector<size_t> merge_indices;
+            checkClusterMerge(i, in_clusters, visited_clusters, merge_indices, in_merge_threshold);
+            mergeClusters(in_clusters, out_clusters, merge_indices, current_index++, merged_clusters);
+        }
+    }
+    for (size_t i = 0; i < in_clusters.size(); i++) {
+        // check for clusters not merged, add them to the output
+        if (!merged_clusters[i]) {
+            out_clusters.push_back(in_clusters[i]);
+        }
+    }
+
+    // ClusterPtr cluster(new Cluster());
 }
 
 /**

@@ -4,7 +4,7 @@
  * @Github: https://github.com/sunmiaozju
  * @LastEditors: sunm
  * @Date: 2019-03-01 11:26:40
- * @LastEditTime: 2019-03-11 14:23:36
+ * @LastEditTime: 2019-04-04 11:04:34
  */
 #ifndef LIDAR_EUCLIDEAN_CLUSTER_H
 #define LIDAR_EUCLIDEAN_CLUSTER_H
@@ -113,7 +113,16 @@ private:
     void convertXYZ2XYZRT(const pcl::PointCloud<pcl::PointXYZ>::Ptr& in_cloud,
         std::vector<PointCloudXYZRT>& out_radial_divided_cloud);
 
-    void mergeClusters();
+    void mergeClusters(const std::vector<ClusterPtr>& in_clusters, std::vector<ClusterPtr>& out_clusters,
+        std::vector<size_t> in_merge_indices, const size_t& current_index,
+        std::vector<bool>& in_out_merged_clusters);
+
+    void checkAllForMerge(std::vector<ClusterPtr>& in_clusters, std::vector<ClusterPtr>& out_clusters,
+        float in_merge_threshold);
+
+    void checkClusterMerge(size_t in_cluster_id, std::vector<ClusterPtr>& in_clusters,
+        std::vector<bool>& in_out_visited_clusters, std::vector<size_t>& out_merge_indices,
+        double in_merge_threshold);
 
     void downsampleCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr& in_cloud,
         pcl::PointCloud<pcl::PointXYZ>::Ptr& out_cloud,
