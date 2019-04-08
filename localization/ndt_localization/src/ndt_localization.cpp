@@ -430,25 +430,24 @@ void NDTLocalization::odomCB(const nav_msgs::Odometry::ConstPtr& msg)
     // pre_pose_odom_ = current_pose_odom_;
     // ROS_INFO("offset_odom.y: %.2f, %f", offset_odom_.y, ros::Time::now().toSec());
     // ROS_INFO("Current odom pose: (%.2f, %.2f, %.2f; %.2f, %.2f, %.2f)", current_pose_odom_.x, current_pose_odom_.y, current_pose_odom_.z, current_pose_odom_.roll, current_pose_odom_.pitch, current_pose_odom_.yaw);
-    pre_odom_time_
-        = msg->header.stamp;
+    pre_odom_time_ = msg->header.stamp;
 
     tf_broadcaster_.sendTransform(tf::StampedTransform(current_map2odom_, msg->header.stamp, param_map_frame_, param_odom_frame_));
 
-    if (param_debug_ && rawodom_init_) {
-        msg_rawodom_.header.stamp = msg->header.stamp;
-        tf::Quaternion tmp_q;
-        tf::quaternionMsgToTF(msg_rawodom_.pose.pose.orientation, tmp_q);
-        double roll, pitch, yaw;
-        tf::Matrix3x3(tf::Quaternion(tmp_q)).getEulerYPR(yaw, pitch, roll);
-        msg_rawodom_.pose.pose.position.x += std::cos(-pitch) * std::cos(yaw) * diff_x;
-        msg_rawodom_.pose.pose.position.y += std::cos(-pitch) * std::sin(yaw) * diff_x;
-        msg_rawodom_.pose.pose.position.z += std::sin(-pitch) * diff_x;
-        yaw += msg->twist.twist.angular.z * diff_time;
-        tmp_q.setRPY(roll, pitch, yaw);
-        tf::quaternionTFToMsg(tmp_q, msg_rawodom_.pose.pose.orientation);
-        pub_rawodom_.publish(msg_rawodom_);
-    }
+    // if (param_debug_ && rawodom_init_) {
+    //     msg_rawodom_.header.stamp = msg->header.stamp;
+    //     tf::Quaternion tmp_q;
+    //     tf::quaternionMsgToTF(msg_rawodom_.pose.pose.orientation, tmp_q);
+    //     double roll, pitch, yaw;
+    //     tf::Matrix3x3(tf::Quaternion(tmp_q)).getEulerYPR(yaw, pitch, roll);
+    //     msg_rawodom_.pose.pose.position.x += std::cos(-pitch) * std::cos(yaw) * diff_x;
+    //     msg_rawodom_.pose.pose.position.y += std::cos(-pitch) * std::sin(yaw) * diff_x;
+    //     msg_rawodom_.pose.pose.position.z += std::sin(-pitch) * diff_x;
+    //     yaw += msg->twist.twist.angular.z * diff_time;
+    //     tmp_q.setRPY(roll, pitch, yaw);
+    //     tf::quaternionTFToMsg(tmp_q, msg_rawodom_.pose.pose.orientation);
+    //     pub_rawodom_.publish(msg_rawodom_);
+    // }
 }
 
 /** 
@@ -708,42 +707,42 @@ void NDTLocalization::pointCloudCB(const sensor_msgs::PointCloud2::ConstPtr& msg
     // [] transform2 : map -> base_link
 
     // publish map->odom using map->base and odom->base
-    if (param_use_odom_) {
-        tf::StampedTransform transform1; // odom_link -> base_link
-        try {
-            tf_listener_.waitForTransform(param_odom_frame_, param_base_frame_, ros::Time(0), ros::Duration(param_tf_timeout_), ros::Duration(param_tf_timeout_ / 3));
-            tf_listener_.lookupTransform(param_odom_frame_, param_base_frame_, ros::Time(0), transform1);
-        } catch (const tf::TransformException& ex) {
-            ROS_ERROR("Error waiting for tf in pointCloudCB: %s", ex.what());
-            // TODO do some stuff
-            return;
-        }
-        current_map2odom_ = transform2 * transform1.inverse();
-        // tf_broadcaster_.sendTransform(tf::StampedTransform(current_map2odom_, msg->header.stamp, param_map_frame_, param_odom_frame_));
-        // [] transform1 : odom -> base_link
-    }
+    // if (param_use_odom_) {
+    //     tf::StampedTransform transform1; // odom_link -> base_link
+    //     try {
+    //         tf_listener_.waitForTransform(param_odom_frame_, param_base_frame_, ros::Time(0), ros::Duration(param_tf_timeout_), ros::Duration(param_tf_timeout_ / 3));
+    //         tf_listener_.lookupTransform(param_odom_frame_, param_base_frame_, ros::Time(0), transform1);
+    //     } catch (const tf::TransformException& ex) {
+    //         ROS_ERROR("Error waiting for tf in pointCloudCB: %s", ex.what());
+    //         // TODO do some stuff
+    //         return;
+    //     }
+    //     current_map2odom_ = transform2 * transform1.inverse();
+    //     // tf_broadcaster_.sendTransform(tf::StampedTransform(current_map2odom_, msg->header.stamp, param_map_frame_, param_odom_frame_));
+    //     // [] transform1 : odom -> base_link
+    // }
 
-    if (param_debug_ && !rawodom_init_ && !use_predict_pose) {
-        rawodom_init_ = true;
-        tf::poseTFToMsg(transform2, msg_rawodom_.pose.pose);
-    }
-    geometry_msgs::Vector3 scale;
-    scale.x = 6.0 / (trans_probability_ + 0.1);
-    scale.y = 3.0 / (fitness_score_ + 0.1);
-    scale.z = 0.1;
-    util::pubMarkerCylinder(pub_marker_loc_conf_, msg_current_pose_.pose, msg->header.stamp, param_map_frame_, scale);
+    // if (param_debug_ && !rawodom_init_ && !use_predict_pose) {
+    //     rawodom_init_ = true;
+    //     tf::poseTFToMsg(transform2, msg_rawodom_.pose.pose);
+    // }
+    // geometry_msgs::Vector3 scale;
+    // scale.x = 6.0 / (trans_probability_ + 0.1);
+    // scale.y = 3.0 / (fitness_score_ + 0.1);
+    // scale.z = 0.1;
+    // util::pubMarkerCylinder(pub_marker_loc_conf_, msg_current_pose_.pose, msg->header.stamp, param_map_frame_, scale);
 
-    std::stringstream ss;
-    ss << std::fixed << std::setprecision(4) << "ndt_pose: (" << current_pose_.x << ", " << current_pose_.y << ", " << current_pose_.z << "; " << RAD2ANGLE(current_pose_.roll) << ", " << RAD2ANGLE(current_pose_.pitch) << ", " << RAD2ANGLE(current_pose_.yaw) << ")" << std::endl
-       << "transform prob: " << trans_probability_ << std::endl
-       << "ndt score: " << fitness_score_ << std::endl
-       << "match time: " << (align_end - align_start).toSec() << "s" << std::endl
-       << "iters: " << iteration_ << std::endl;
-    geometry_msgs::Pose pose;
-    pose.position.x = 0.;
-    pose.position.z = 1.;
-    pose.position.y = -20.;
-    util::pubMarkerText(pub_marker_trans_prob_, pose, msg->header.stamp, param_map_frame_, ss.str());
+    // std::stringstream ss;
+    // ss << std::fixed << std::setprecision(4) << "ndt_pose: (" << current_pose_.x << ", " << current_pose_.y << ", " << current_pose_.z << "; " << RAD2ANGLE(current_pose_.roll) << ", " << RAD2ANGLE(current_pose_.pitch) << ", " << RAD2ANGLE(current_pose_.yaw) << ")" << std::endl
+    //    << "transform prob: " << trans_probability_ << std::endl
+    //    << "ndt score: " << fitness_score_ << std::endl
+    //    << "match time: " << (align_end - align_start).toSec() << "s" << std::endl
+    //    << "iters: " << iteration_ << std::endl;
+    // geometry_msgs::Pose pose;
+    // pose.position.x = 0.;
+    // pose.position.z = 1.;
+    // pose.position.y = -20.;
+    // util::pubMarkerText(pub_marker_trans_prob_, pose, msg->header.stamp, param_map_frame_, ss.str());
 
     offset_odom_.reset();
     // current_pose_odom_ = current_pose_;

@@ -18,13 +18,13 @@ bool OdomImu::init()
     pnh_.param<std::string>("base_frame", param_base_frame_, std::string("/base_link"));
     pnh_.param<std::string>("odom_frame", param_odom_frame_, std::string("/odom"));
     pnh_.param<std::string>("sub_imu_topic", sub_imu_topic_, std::string("/imu"));
-    pnh_.param<std::string>("sub_hall_topic", sub_hall_topic_, std::string("/hall_speed"));
+    // pnh_.param<std::string>("sub_hall_topic", sub_hall_topic_, std::string("/hall_speed"));
 
     pub_odom_ = nh_.advertise<nav_msgs::Odometry>("/odomImu/odom", 1);
     pub_odom_imu_ = nh_.advertise<nav_msgs::Odometry>("/odomImu/odom_imu", 1);
     sub_imu_ = nh_.subscribe<sensor_msgs::Imu>(sub_imu_topic_, 500, boost::bind(&OdomImu::imuCB, this, _1));
     // sub_encoder_ = nh_.subscribe<geometry_msgs::TwistStamped>(sub_hall_topic_, 100, boost::bind(&OdomImu::encoderCB, this, _1));
-    sub_odom_ = nh_.subscribe<can_msgs::feedback>("/feed_back", 1, boost::bind(&OdomImu::odomCB, this, _1));
+    sub_odom_ = nh_.subscribe<can_msgs::vehicle_status>("vehicle_status", 1, boost::bind(&OdomImu::odomCB, this, _1));
 
     ROS_INFO("End init OdomImu.");
 
@@ -41,11 +41,11 @@ bool OdomImu::init()
 //   cur_vel_ = *msg;
 // }
 
-void OdomImu::odomCB(const can_msgs::feedback::ConstPtr& msg)
+void OdomImu::odomCB(const can_msgs::vehicle_status::ConstPtr& msg)
 {
     if (first_encoder_) {
         first_encoder_ = false;
-        ROS_INFO("Received first (encoder) vehicle feed_back.");
+        ROS_INFO("Received first vehicle feed_back.");
     }
     cur_vel_.header = msg->Header;
     cur_vel_.twist.linear.x = msg->cur_speed;
@@ -129,29 +129,29 @@ void OdomImu::imuCB(const sensor_msgs::Imu::ConstPtr& msg)
     pre_pose_ = current_pose_;
     pre_time_ = msg->header.stamp;
 
-    if (!tf_init_) {
-        try {
-            tf_listener_.waitForTransform(param_base_frame_, msg->header.frame_id, ros::Time(0), ros::Duration(0.1));
-            tf_listener_.lookupTransform(param_base_frame_, msg->header.frame_id, ros::Time(0), tf_btoi_);
-        } catch (tf::TransformException& ex) {
-            ROS_ERROR("Transform error in imuCB: %s", ex.what());
-            return;
-        }
-    }
+    // if (!tf_init_) {
+    //     try {
+    //         tf_listener_.waitForTransform(param_base_frame_, msg->header.frame_id, ros::Time(0), ros::Duration(0.1));
+    //         tf_listener_.lookupTransform(param_base_frame_, msg->header.frame_id, ros::Time(0), tf_btoi_);
+    //     } catch (tf::TransformException& ex) {
+    //         ROS_ERROR("Transform error in imuCB: %s", ex.what());
+    //         return;
+    //     }
+    // }
 
-    tf::Quaternion tmp_q;
-    tmp_q.setRPY(0., 0., current_pose_.yaw);
+    // tf::Quaternion tmp_q;
+    // tmp_q.setRPY(0., 0., current_pose_.yaw);
 
-    tf::Transform transform2(tmp_q, tf::Vector3(current_pose_.x, current_pose_.y, current_pose_.z));
-    // transform odom->imu to odom->base
-    tf::Transform transform = transform2 * tf_btoi_.inverse();
-    tf_broadcaster_.sendTransform(tf::StampedTransform(transform, msg->header.stamp, param_odom_frame_, param_base_frame_));
+    // tf::Transform transform2(tmp_q, tf::Vector3(current_pose_.x, current_pose_.y, current_pose_.z));
+    // // transform odom->imu to odom->base
+    // tf::Transform transform = transform2 * tf_btoi_.inverse();
+    // tf_broadcaster_.sendTransform(tf::StampedTransform(transform, msg->header.stamp, param_odom_frame_, param_base_frame_));
 
     msg_odom_.header.stamp = msg->header.stamp;
     msg_odom_.header.frame_id = param_odom_frame_;
     msg_odom_.child_frame_id = param_base_frame_;
-    tf::pointTFToMsg(transform.getOrigin(), msg_odom_.pose.pose.position);
-    tf::quaternionTFToMsg(transform.getRotation(), msg_odom_.pose.pose.orientation);
+    // tf::pointTFToMsg(transform.getOrigin(), msg_odom_.pose.pose.position);
+    // tf::quaternionTFToMsg(transform.getRotation(), msg_odom_.pose.pose.orientation);
     msg_odom_.twist.twist.angular.x = angle_vel_x;
     msg_odom_.twist.twist.angular.y = angle_vel_y;
     msg_odom_.twist.twist.angular.z = angle_vel_z;
@@ -182,7 +182,9 @@ bool IMU::init()
 
     pub_odom_imu_ = nh_.advertise<nav_msgs::Odometry>("/odomImu/odom_imu", 1);
     sub_imu_ = nh_.subscribe<sensor_msgs::Imu>(sub_imu_topic_, 500, boost::bind(&IMU::imuCB, this, _1));
-    sub_pose_ = nh_.subscribe<geometry_msgs::PoseStamped>("/current_pose", 1, boost::bind(&IMU::poseCB, this, _1));
+    sub_pose_ = nh_.subscribe<geometry_msgs::PoseStamped>("/ndt/current_pose", 1, boost::bind(&IMU::poseCB, this, _1));
+
+    pub_debug_vel_ = nh_.advertise<std_msgs::Float32>("/odom_imu/debug_vel", 1);
 
     ROS_INFO("End init OdomImu.");
 
@@ -191,6 +193,7 @@ bool IMU::init()
 
 void IMU::poseCB(const geometry_msgs::PoseStampedConstPtr& msg)
 {
+    ROS_WARN_STREAM("odom_imu -> received current_pose");
     static int waitNum = 10;
     static int cnt = 0;
     if (cnt < waitNum) {
@@ -210,13 +213,17 @@ void IMU::poseCB(const geometry_msgs::PoseStampedConstPtr& msg)
 
     cur_vel_.header = msg->header;
     cur_vel_.twist.linear.x = dis / (last.header.stamp.toSec() - first.header.stamp.toSec());
+
+    std_msgs::Float32 msg_vel;
+    msg_vel.data = cur_vel_.twist.linear.x;
+    pub_debug_vel_.publish(msg_vel);
     // cur_vel_.twist.linear.y = 0;
     // cur_vel_.twist.linear.z = 0;
 
     // cur_vel_.twist.angular.x = 0;
     // cur_vel_.twist.angular.y = 0;
     // cur_vel_.twist.angular.z = msg->cur_steer;  // TODO::Confirm--feedback.steer <-转化-> angular.z
-    nav_msgs::Odometry msg_odom_p;
+    // nav_msgs::Odometry msg_odom_p;
     // msg_odom_p.header = msg->Header;
     // msg_odom_p.twist.twist = cur_vel_.twist;
     // pub_odom_.publish(msg_odom_p);
@@ -290,29 +297,29 @@ void IMU::imuCB(const sensor_msgs::Imu::ConstPtr& msg)
     pre_pose_ = current_pose_;
     pre_time_ = msg->header.stamp;
 
-    if (!tf_init_) {
-        try {
-            tf_listener_.waitForTransform(param_base_frame_, msg->header.frame_id, ros::Time(0), ros::Duration(0.1));
-            tf_listener_.lookupTransform(param_base_frame_, msg->header.frame_id, ros::Time(0), tf_btoi_);
-        } catch (tf::TransformException& ex) {
-            ROS_ERROR("Transform error in imuCB: %s", ex.what());
-            return;
-        }
-    }
+    // if (!tf_init_) {
+    //     try {
+    //         tf_listener_.waitForTransform(param_base_frame_, msg->header.frame_id, ros::Time(0), ros::Duration(0.1));
+    //         tf_listener_.lookupTransform(param_base_frame_, msg->header.frame_id, ros::Time(0), tf_btoi_);
+    //     } catch (tf::TransformException& ex) {
+    //         ROS_ERROR("Transform error in imuCB: %s", ex.what());
+    //         return;
+    //     }
+    // }
 
-    tf::Quaternion tmp_q;
-    tmp_q.setRPY(0., 0., current_pose_.yaw);
+    // tf::Quaternion tmp_q;
+    // tmp_q.setRPY(0., 0., current_pose_.yaw);
 
-    tf::Transform transform2(tmp_q, tf::Vector3(current_pose_.x, current_pose_.y, current_pose_.z));
-    // transform odom->imu to odom->base
-    tf::Transform transform = transform2 * tf_btoi_.inverse();
-    tf_broadcaster_.sendTransform(tf::StampedTransform(transform, msg->header.stamp, param_odom_frame_, param_base_frame_));
+    // tf::Transform transform2(tmp_q, tf::Vector3(current_pose_.x, current_pose_.y, current_pose_.z));
+    // // transform odom->imu to odom->base
+    // tf::Transform transform = transform2 * tf_btoi_.inverse();
+    // tf_broadcaster_.sendTransform(tf::StampedTransform(transform, msg->header.stamp, param_odom_frame_, param_base_frame_));
 
     msg_odom_.header.stamp = msg->header.stamp;
     msg_odom_.header.frame_id = param_odom_frame_;
     msg_odom_.child_frame_id = param_base_frame_;
-    tf::pointTFToMsg(transform.getOrigin(), msg_odom_.pose.pose.position);
-    tf::quaternionTFToMsg(transform.getRotation(), msg_odom_.pose.pose.orientation);
+    // tf::pointTFToMsg(transform.getOrigin(), msg_odom_.pose.pose.position);
+    // tf::quaternionTFToMsg(transform.getRotation(), msg_odom_.pose.pose.orientation);
     msg_odom_.twist.twist.angular.x = angle_vel_x;
     msg_odom_.twist.twist.angular.y = angle_vel_y;
     msg_odom_.twist.twist.angular.z = angle_vel_z;

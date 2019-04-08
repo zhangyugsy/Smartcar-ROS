@@ -12,7 +12,7 @@ lidar_topic: "/ray_filter/velodyne_points_filtered"
 # lidar_topic: "/lslidar_point_cloud"                 # ese
 
 #>>>>>>>>Switch
-use_odom: false   # if you want to shut down imu/odom , just set this param "false"
+use_odom: true   # if you want to shut down imu/odom , just set this param "false"
 use_local_target: false
 if_init_pose_with_param: false  # if you want to initial the start-pose with given param, set it "true", or you want to set it in rviz manmally, set it "false"
 debug: true
