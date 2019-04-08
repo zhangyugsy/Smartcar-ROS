@@ -84,6 +84,7 @@ private:
     ros::Publisher pub_global_map;
 
     ros::Subscriber sub_odom_;
+    
     nav_msgs::Odometry::ConstPtr msg_odom_; // under odom frame
     ros::Subscriber sub_map_;
     PointCloudT model_pc_;
@@ -114,6 +115,7 @@ private:
     pose current_pose_odom_;
     pose pre_pose_odom_;
     pose predict_pose_odom_;
+
     pose offset_odom_;
     ros::Time pre_odom_time_;
     // pose current_pose_imu_;

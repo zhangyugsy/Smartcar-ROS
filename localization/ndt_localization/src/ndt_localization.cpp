@@ -37,12 +37,11 @@ bool NDTLocalization::init()
     pnh_.param<std::string>("laser_frame", param_laser_frame_, std::string("/laser"));
     pnh_.param<std::string>("map_topic", param_map_topic_, std::string("/map"));
     pnh_.param<std::string>("odom_topic", param_odom_topic_, std::string("/odom"));
-    // pnh_.param<std::string>("imu_topic", param_imu_topic_, std::string("/imu_base_link"));
     pnh_.param<std::string>("lidar_topic", param_lidar_topic_, std::string("/velodyne_points"));
     std::cout << "lidar topic is " << param_lidar_topic_ << std::endl;
 
     pnh_.param<double>("tf_timeout", param_tf_timeout_, 0.05);
-    pnh_.param<bool>("use_odom", param_use_odom_, true);
+    pnh_.param<bool>("use_odom", param_use_odom_, false);
     pnh_.param<double>("odom_timeout", param_odom_timeout_, 1);
     if (param_use_odom_) {
         ROS_WARN_STREAM("Use odom.");
@@ -425,11 +424,14 @@ void NDTLocalization::odomCB(const nav_msgs::Odometry::ConstPtr& msg)
     offset_odom_.y += std::cos(-predict_pose_odom_.pitch) * std::sin(predict_pose_odom_.yaw) * diff_x;
     offset_odom_.z += std::sin(-predict_pose_odom_.pitch) * diff_x;
 
+    pthread_mutex_lock(&mutex);
     predict_pose_odom_ = pre_pose_ + offset_odom_;
+    pthread_mutex_unlock(&mutex);
     // pre_pose_odom_ = current_pose_odom_;
     // ROS_INFO("offset_odom.y: %.2f, %f", offset_odom_.y, ros::Time::now().toSec());
     // ROS_INFO("Current odom pose: (%.2f, %.2f, %.2f; %.2f, %.2f, %.2f)", current_pose_odom_.x, current_pose_odom_.y, current_pose_odom_.z, current_pose_odom_.roll, current_pose_odom_.pitch, current_pose_odom_.yaw);
-    pre_odom_time_ = msg->header.stamp;
+    pre_odom_time_
+        = msg->header.stamp;
 
     tf_broadcaster_.sendTransform(tf::StampedTransform(current_map2odom_, msg->header.stamp, param_map_frame_, param_odom_frame_));
 
@@ -750,6 +752,10 @@ void NDTLocalization::pointCloudCB(const sensor_msgs::PointCloud2::ConstPtr& msg
         pub_debug_path();
     }
     pre_pose_ = current_pose_;
+
+    pthread_mutex_lock(&mutex);
+    predict_pose_odom_ = current_pose_;
+    pthread_mutex_unlock(&mutex);
 }
 
 void NDTLocalization::update_target_map()
