@@ -1,4 +1,5 @@
 
+#include <can_msgs/brake.h>
 #include <iostream>
 #include <ros/ros.h>
 #include <ros/time.h>
@@ -17,6 +18,9 @@ double pre_P_Covariance, cur_P_Covariance;
 double filtered_dis, pre_dis, pre_pre_dis;
 double K;
 
+/**
+ * @description: 一维卡尔曼滤波
+ */
 void linearKalmanFilter(const double& measure_value, const double& pre_value, const double& pre_P_Covariance,
     double& cur_value, double& cur_P_Covariance)
 {
@@ -39,17 +43,20 @@ void linearKalmanFilter(const double& measure_value, const double& pre_value, co
 
 int main(int argc, char** argv)
 {
-
-    ros::init(argc, argv, "uart_ros");
+    ros::init(argc, argv, "ultrasonic_serial");
 
     ros::NodeHandle nh;
     ros::NodeHandle nh_private("~");
 
-    ros::Publisher read_pub = nh.advertise<std_msgs::Float32>("ultrasonic_dis", 1000);
+    ros::Publisher dis_pub = nh.advertise<std_msgs::Float32>("ultrasonic_dis", 10);
+    ros::Publisher brake_pub = nh.advertise<can_msgs::brake>("brake", 10);
+
     nh_private.param("Q_Covariance", Q_Covariance, double(1.5));
     nh_private.param("R_Covariance", R_Covariance, double(1.0));
     pre_P_Covariance = Q_Covariance / 10.;
     pre_dis = 10;
+    pre_pre_dis = 10;
+    can_msgs::brake brake;
 
     try {
         //设置串口属性，并打开串口
@@ -85,16 +92,16 @@ int main(int argc, char** argv)
 
             linearKalmanFilter(raw_dis, pre_dis, pre_P_Covariance, filtered_dis, cur_P_Covariance);
 
+            if (filtered_dis < 2 && pre_pre_dis < 2 && pre_pre_dis < 2) {
+                brake.brake = true;
+                brake_pub.publish(brake);
+            }
+            pre_pre_dis = pre_dis;
             pre_dis = filtered_dis;
             pre_P_Covariance = cur_P_Covariance;
 
             dis_msg.data = filtered_dis;
-            read_pub.publish(dis_msg);
-            //char tmp;
-            //for(size_t i = 0; i < serial_data.data.size(); i++){
-            //    tmp = serial_data.data[i];
-            //    std::cout << int(tmp) << std::endl;
-            //}
+            dis_pub.publish(dis_msg);
         }
         loop_rate.sleep();
     }
