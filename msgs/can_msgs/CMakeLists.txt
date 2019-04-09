@@ -53,6 +53,7 @@ add_message_files(
     ecu.msg
     vehicle_status.msg
     battery.msg
+    brake.msg
 )
 
 ## Generate services in the 'srv' folder
