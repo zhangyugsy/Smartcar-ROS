@@ -5,12 +5,14 @@ project(ultrasonic_serial)
     roscpp
     serial
     std_msgs
+    can_msgs
   )
  
  catkin_package(
    CATKIN_DEPENDS
      serial
      std_msgs
+     can_msgs
  )
  include_directories(
    ${catkin_INCLUDE_DIRS}
