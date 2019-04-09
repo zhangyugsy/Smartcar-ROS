@@ -2,7 +2,6 @@
 #define __ODOM_IMU__
 
 #include "user_protocol.h"
-#include <can_msgs/feedback.h>
 #include <can_msgs/vehicle_status.h>
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Twist.h>
