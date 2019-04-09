@@ -1,0 +1,5 @@
+<launch>
+    <node pkg="global_planning" type="static_cycle_bus.py" name="static_cycle_bus_plan" output="screen">
+        <param name="cyclebus_pathfile" value="$(find global_planning)/cyclebus_pathfile/" />
+    </node>
+</launch>

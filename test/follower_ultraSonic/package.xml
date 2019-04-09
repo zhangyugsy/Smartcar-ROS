@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>follower_ultraSonic</name>
+  <name>follower_ultrasonic</name>
   <version>0.0.0</version>
   <description>The follower_ultraSonic package</description>
 
