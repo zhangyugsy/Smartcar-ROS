@@ -33,6 +33,7 @@ GPIO::GPIO(int gpio)
     direction(GPIO::IN);
 
     fd_value = open(("/sys/class/gpio/gpio" + std::to_string(gpio) + "/value").c_str(), O_RDWR);
+    
     if (fd_value == -1) {
         perror("open");
         throw std::runtime_error("open failed");

@@ -28,15 +28,21 @@ public:
     void operator=(bool value);
 
     operator bool() const;
+    
+    int read() const;
+    
+    struct pollfd poll_targets;
 
 private:
     int fd_value;
+    
     int gpio;
-    struct pollfd poll_targets;
+    
+    
 
     void write_to_file(const std::string& name, const std::string& value);
 
-    int read() const;
+    
 
     bool exported();
 };

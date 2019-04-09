@@ -97,6 +97,7 @@ enum jetsonTX2GPIONumber {
        gpio393 = 393,      // J21 - Pin 40 - GPIO21
        gpio255 = 255,      // J21 - Pin 15
        gpio397 = 397,      // J21 - Pin 13
+       gpio254 = 254,
 } ;
 
 
