@@ -882,14 +882,6 @@ smartcar_msgs::Lane global_plan::smooth_path(smartcar_msgs::Lane path)
         lane_front.assign(path_in.waypoints.begin(), it_front);
         path_in.waypoints.erase(path_in.waypoints.begin(), it_front);
 
-        // vis_path.poses.clear();
-        // for(auto p:lane_front){
-        //     geometry_msgs::PoseStamped pose;
-        //     pose.pose = p.pose.pose;
-        //     vis_path.poses.push_back(pose);
-        // }
-        // pub_vis_path.publish(vis_path);
-
         double diff_x = start_pose.pose.position.x - lane_front[0].pose.pose.position.x;
         double diff_y = start_pose.pose.position.y - lane_front[0].pose.pose.position.y;
         double sum_front = 0;
@@ -914,10 +906,10 @@ smartcar_msgs::Lane global_plan::smooth_path(smartcar_msgs::Lane path)
         smartcar_msgs::Waypoint s = in_front[front_index];
         double lenx = (*path_in.waypoints.begin()).pose.pose.position.x - s.pose.pose.position.x;
         double leny = (*path_in.waypoints.begin()).pose.pose.position.y - s.pose.pose.position.y;
-        int cnt = int(util::distance2points(s.pose.pose.position, (*path_in.waypoints.begin()).pose.pose.position) / 0.5);
-        double dx = lenx / cnt;
-        double dy = leny / cnt;
-        for (int i = 1; i < cnt; i++) {
+        int cnt_front = int(util::distance2points(s.pose.pose.position, (*path_in.waypoints.begin()).pose.pose.position) / 0.5);
+        double dx = lenx / cnt_front;
+        double dy = leny / cnt_front;
+        for (int i = 1; i < cnt_front; i++) {
             smartcar_msgs::Waypoint temp;
             temp.is_lane = 1;
             temp.speed_limit = 1.0; // 缓慢起步
@@ -963,15 +955,15 @@ smartcar_msgs::Lane global_plan::smooth_path(smartcar_msgs::Lane path)
         smartcar_msgs::Waypoint e = in_end[in_end.size() - 1];
         double lenx = e.pose.pose.position.x - (*(path_in.waypoints.end() - 1)).pose.pose.position.x;
         double leny = e.pose.pose.position.y - (*(path_in.waypoints.end() - 1)).pose.pose.position.y;
-        int cnt = int(util::distance2points(e.pose.pose.position, (*(path_in.waypoints.end() - 1)).pose.pose.position) / 0.5);
-        double dx = lenx / cnt;
-        double dy = leny / cnt;
-        for (int i = cnt; i > 0; i--) {
+        int cnt_end = int(util::distance2points(e.pose.pose.position, (*(path_in.waypoints.end() - 1)).pose.pose.position) / 0.5);
+        double dx = lenx / cnt_end;
+        double dy = leny / cnt_end;
+        for (int i = cnt_end; i > 0; i--) {
             smartcar_msgs::Waypoint temp;
             temp.is_lane = 1;
             temp.speed_limit = 1.0;
-            temp.pose.pose.position.x = e.pose.pose.position.x - (cnt - i) * dx;
-            temp.pose.pose.position.y = e.pose.pose.position.y - (cnt - i) * dy;
+            temp.pose.pose.position.x = e.pose.pose.position.x - (cnt_end - i) * dx;
+            temp.pose.pose.position.y = e.pose.pose.position.y - (cnt_end - i) * dy;
             in_end.push_back(temp);
         }
         std::reverse(in_end.begin(), in_end.end());
@@ -992,14 +984,14 @@ smartcar_msgs::Lane global_plan::smooth_path(smartcar_msgs::Lane path)
 
     // Smooth 函数
     if (size > 30) {
-        smooth(smoothPath_out, 0, 40, 2, weight_data, weight_smooth, tolerance);
-        smooth(smoothPath_out, size - 40, 40, 2, weight_data, weight_smooth, tolerance);
+        smooth(smoothPath_out, 0, in_front.size() + 5, 2, weight_data, weight_smooth, tolerance);
+        smooth(smoothPath_out, size - in_end.size() - 5, in_end.size() + 5, 2, weight_data, weight_smooth, tolerance);
     } else {
         smooth(smoothPath_out, 0, size, 2, weight_data, weight_smooth, tolerance);
     }
 
     // 调整每个轨迹点的角度
-    for (size_t i = 0; i < smoothPath_out.waypoints.size() - 1; i++) {
+    for (size_t i = 0; i < smoothPath_out.waypoints.size() - 2; i++) {
         smartcar_msgs::Waypoint p_c = smoothPath_out.waypoints[i];
         smartcar_msgs::Waypoint p_n = smoothPath_out.waypoints[i + 1];
         double yaw = std::atan2(p_n.pose.pose.position.y - p_c.pose.pose.position.y, p_n.pose.pose.position.x - p_c.pose.pose.position.x);
@@ -1025,15 +1017,15 @@ smartcar_msgs::Lane global_plan::smooth_path(smartcar_msgs::Lane path)
         visualization_msgs::Marker arrow;
         arrow.header.frame_id = "map";
         // arrow.header.stamp = ros::Time::now();
-        arrow.id = i + 1;
+        arrow.id = i;
         arrow.type = visualization_msgs::Marker::ARROW;
         arrow.action = visualization_msgs::Marker::ADD;
         arrow.scale.x = 0.4;
         arrow.scale.y = 0.1;
         arrow.scale.z = 0.2;
         arrow.color.r = 0;
-        arrow.color.g = 0;
-        arrow.color.b = 1;
+        arrow.color.g = 1;
+        arrow.color.b = 0;
         arrow.color.a = 1;
         arrow.pose = smoothPath_out.waypoints[i].pose.pose;
         marker_arrow_array.markers.push_back(arrow);

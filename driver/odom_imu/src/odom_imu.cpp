@@ -20,7 +20,7 @@ bool OdomImu::init()
     pnh_.param<std::string>("sub_imu_topic", sub_imu_topic_, std::string("/imu"));
     // pnh_.param<std::string>("sub_hall_topic", sub_hall_topic_, std::string("/hall_speed"));
 
-    pub_odom_ = nh_.advertise<nav_msgs::Odometry>("/odomImu/odom", 1);
+    // pub_odom_ = nh_.advertise<nav_msgs::Odometry>("/odomImu/odom", 1);
     pub_odom_imu_ = nh_.advertise<nav_msgs::Odometry>("/odomImu/odom_imu", 1);
     sub_imu_ = nh_.subscribe<sensor_msgs::Imu>(sub_imu_topic_, 500, boost::bind(&OdomImu::imuCB, this, _1));
     // sub_encoder_ = nh_.subscribe<geometry_msgs::TwistStamped>(sub_hall_topic_, 100, boost::bind(&OdomImu::encoderCB, this, _1));

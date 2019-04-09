@@ -80,12 +80,12 @@ public:
         SENSOR_MODEL = 16;
         // SENSOR_HEIGHT = 0.37;
         SENSOR_HEIGHT = 1.7;
-        local_max_slope_ = 5.0;
-        general_max_slope_ = 3.0;
+        local_max_slope_ = 8.0;
+        general_max_slope_ = 7.0;
         min_height_threshold_ = 0.05;
         reclass_distance_threshold_ = 0.2;
         RADIAL_DIVIDER_ANGLE = 0.18;
-        concentric_divider_distance_ = 0.01;
+        concentric_divider_distance_ = 0.02;
         MIN_DISTANCE = 0.0;
 
         CLIP_HEIGHT = 1.0;
