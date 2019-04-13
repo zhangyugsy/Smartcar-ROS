@@ -16,7 +16,7 @@ imu_upside_down: false
 visualize: true
 ndt_method_type: 2  # 0:pcl 1:cpu 2:gpu 3:omp 4:gpu_ptr
 
-is_publish_map_full: false
+is_publish_map_full: true
 is_publish_map_filterd_ground: false
 is_publish_map_for_costmap: true
 is_publish_map_for_vectormap: false

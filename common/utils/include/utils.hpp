@@ -130,6 +130,46 @@ std::map<std::string, double> Quaternion2RPY(double x, double y, double z, doubl
     return res;
 }
 
+visualization_msgs::Marker CUBE()
+{
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "map";
+    marker.header.stamp = ros::Time::now();
+    marker.id = 0;
+    marker.type = visualization_msgs::Marker::CUBE;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.scale.x = 1.0;
+    marker.scale.y = 1.0;
+    marker.scale.z = 1.0;
+    marker.color.r = 1;
+    marker.color.g = 0;
+    marker.color.b = 0;
+    marker.color.a = 1;
+    // set marker.pose
+    // marker_end.lifetime = ros::Duration();
+    return marker;
+}
+
+visualization_msgs::Marker ARROW()
+{
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "map";
+    marker.header.stamp = ros::Time::now();
+    marker.id = 0;
+    marker.type = visualization_msgs::Marker::ARROW;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.scale.x = 2.0;
+    marker.scale.y = 0.5;
+    marker.scale.z = 0.5;
+    marker.color.r = 1;
+    marker.color.g = 0;
+    marker.color.b = 0;
+    marker.color.a = 1;
+    // set marker.pose
+    // marker_start.lifetime = ros::Duration();
+    return marker;
+}
+
 } // namespace util
 
 #endif

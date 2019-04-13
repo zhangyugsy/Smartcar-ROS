@@ -30,6 +30,7 @@ add_message_files(
         TrafficLight.msg
         TrafficLightResultArray.msg
         ImageLaneObjects.msg
+        DiffSonic.msg
 
 
 )

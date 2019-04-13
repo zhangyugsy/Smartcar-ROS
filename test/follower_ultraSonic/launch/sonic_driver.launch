@@ -1,0 +1,17 @@
+<launch>
+    <node pkg="follower_ultrasonic" type="sonic_driver" name="sonic_driver" output="screen">
+        <param name="port_left" value="/dev/ttyUSB0"/>
+        <param name="port_right" value="/dev/ttyUSB1"/>
+        <param name="baud" value="115200"/>
+    </node>
+
+    <!-- <node pkg="follower_ultrasonic" type="sonic_driver.py" name="sonic_driver" output="screen">
+        <param name="left_port" value="/dev/ttyUSB0"/>
+        <param name="right_port" value="/dev/ttyUSB1"/>
+        <param name="baud" value="115200"/>
+        <param name="width" value="1.0" />
+    </node> -->
+
+
+
+</launch>

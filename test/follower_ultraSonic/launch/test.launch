@@ -1,0 +1,11 @@
+<launch>
+    <include file="$(find follower_ultrasonic)/launch/sonic_driver.launch" />
+    <node pkg="rviz" type="rviz" name="rviz_sonic_follower" args="-d $(find follower_ultrasonic)/rviz/test.rviz" />
+    <node pkg="follower_ultrasonic" type="follower.py" name="sonic_follower" output="screen">
+        <param name="sonic_topic" value="/sonic_raw"/>
+        <param name="receiver_width" value="0.6" />
+        <param name="pub_topic" value="/ecu" />
+        <param name="visualize" value="True" type="Bool" />
+    </node>
+
+</launch>
