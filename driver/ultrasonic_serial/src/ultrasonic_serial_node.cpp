@@ -56,7 +56,7 @@ int main(int argc, char** argv)
     pre_P_Covariance = Q_Covariance / 10.;
     pre_dis = 10;
     pre_pre_dis = 10;
-    can_msgs::brake brake;
+    
 
     try {
         //设置串口属性，并打开串口
@@ -77,11 +77,13 @@ int main(int argc, char** argv)
     }
 
     ros::Rate loop_rate(10);
+    
     while (ros::ok()) {
         if (ser.available()) {
             //ROS_INFO_STREAM("Reading from serial port");
             std_msgs::UInt8MultiArray serial_data;
             std_msgs::Float32 dis_msg;
+            can_msgs::brake brake;
 
             ser.read(serial_data.data, ser.available());
 
@@ -92,17 +94,28 @@ int main(int argc, char** argv)
 
             linearKalmanFilter(raw_dis, pre_dis, pre_P_Covariance, filtered_dis, cur_P_Covariance);
 
-            if (filtered_dis < 2 && pre_pre_dis < 2 && pre_pre_dis < 2) {
-                brake.brake = true;
-                brake_pub.publish(brake);
+            if (filtered_dis < 3 && pre_pre_dis < 3 && pre_pre_dis < 3) {
+                brake.brake = true; 
+            }else{
+                brake.brake = false;
             }
+            brake_pub.publish(brake);
+            
             pre_pre_dis = pre_dis;
             pre_dis = filtered_dis;
             pre_P_Covariance = cur_P_Covariance;
 
             dis_msg.data = filtered_dis;
             dis_pub.publish(dis_msg);
+        }else{
+            //can_msgs::brake brake2;
+            //brake2.brake = false; 
+            //std_msgs::Float32 dis_msg2;
+            //dis_msg2.data = 999; 
+            //dis_pub.publish(dis_msg2);
+            //brake_pub.publish(brake2);
         }
-        loop_rate.sleep();
+        
+        //loop_rate.sleep();
     }
 }
