@@ -1,0 +1,15 @@
+consolelogger.cpp.o: consolelogger.cpp config.h ../xstypes/xstypesconfig.h \
+ ../xstypes/xstypedefs.h ../xstypes/xstypesconfig.h ../xstypes/pstdint.h \
+ ../xstypes/xsens_compat.h consolelogger.h additionalloggerbase.h \
+ abstractadditionallogger.h journalloglevel.h
+consolelogger.cpp:
+config.h:
+../xstypes/xstypesconfig.h:
+../xstypes/xstypedefs.h:
+../xstypes/xstypesconfig.h:
+../xstypes/pstdint.h:
+../xstypes/xsens_compat.h:
+consolelogger.h:
+additionalloggerbase.h:
+abstractadditionallogger.h:
+journalloglevel.h:

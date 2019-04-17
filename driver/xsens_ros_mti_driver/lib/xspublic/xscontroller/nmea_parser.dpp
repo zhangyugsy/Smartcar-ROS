@@ -1,0 +1,23 @@
+nmea_parser.cpp.o: nmea_parser.cpp xscontrollerconfig.h \
+ ../xscommon/journaller.h ../xscommon/journalloglevel.h \
+ ../xscommon/abstractadditionallogger.h ../xstypes/xsstring.h \
+ ../xstypes/xstypesconfig.h ../xstypes/xstypedefs.h ../xstypes/pstdint.h \
+ ../xstypes/xsarray.h nmea_parser.h nmea_parsersubject.h nmea_iparser.h \
+ nmea_value.h nmea_common.h xscontrollerconfig.h ../xstypes/pstdint.h
+nmea_parser.cpp:
+xscontrollerconfig.h:
+../xscommon/journaller.h:
+../xscommon/journalloglevel.h:
+../xscommon/abstractadditionallogger.h:
+../xstypes/xsstring.h:
+../xstypes/xstypesconfig.h:
+../xstypes/xstypedefs.h:
+../xstypes/pstdint.h:
+../xstypes/xsarray.h:
+nmea_parser.h:
+nmea_parsersubject.h:
+nmea_iparser.h:
+nmea_value.h:
+nmea_common.h:
+xscontrollerconfig.h:
+../xstypes/pstdint.h:

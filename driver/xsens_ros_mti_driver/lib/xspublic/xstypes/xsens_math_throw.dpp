@@ -1,0 +1,12 @@
+xsens_math_throw.c.o: xsens_math_throw.cpp xsens_math_throw.h \
+ xstypesconfig.h xstypedefs.h pstdint.h xsexception.h xsresultvalue.h \
+ xsstring.h xsarray.h
+xsens_math_throw.cpp:
+xsens_math_throw.h:
+xstypesconfig.h:
+xstypedefs.h:
+pstdint.h:
+xsexception.h:
+xsresultvalue.h:
+xsstring.h:
+xsarray.h:

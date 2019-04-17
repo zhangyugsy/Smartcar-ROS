@@ -1,0 +1,10 @@
+stackwalker.cpp.o: stackwalker.cpp config.h ../xstypes/xstypesconfig.h \
+ ../xstypes/xstypedefs.h ../xstypes/xstypesconfig.h ../xstypes/pstdint.h \
+ ../xstypes/xsens_compat.h
+stackwalker.cpp:
+config.h:
+../xstypes/xstypesconfig.h:
+../xstypes/xstypedefs.h:
+../xstypes/xstypesconfig.h:
+../xstypes/pstdint.h:
+../xstypes/xsens_compat.h:
