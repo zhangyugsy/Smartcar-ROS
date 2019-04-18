@@ -4,6 +4,7 @@
 import rospy
 from visualization_msgs.msg import Marker, MarkerArray
 from smartcar_msgs.msg import DiffSonic
+from geometry_msgs.msg import Twist
 import utils
 from can_msgs.msg import ecu
 import numpy as np
@@ -19,13 +20,17 @@ class APP():
         self.receiver_width = rospy.get_param("~receiver_width", 1.0)
         self.target_cnt = 0
         self.if_vis = rospy.get_param("~visualize", False)
+        self.vehicle = rospy.get_param("~vehicle_type", "yunle_car")
 
     def _add_sub_(self):
-        rospy.Subscriber(self.sonic_topic, DiffSonic, self._sonic_handler, queue_size=1)
+        rospy.Subscriber(self.sonic_topic, DiffSonic,
+                         self._sonic_handler, queue_size=1)
 
     def _add_pub_(self):
-        self.pub_cmd = rospy.Publisher(self.pub_topic, ecu, queue_size=1)
-        self.pub_vis = rospy.Publisher("/follower_vis", MarkerArray, queue_size=10)
+        self.pub_yunle_cmd = rospy.Publisher(self.pub_topic, ecu, queue_size=1)
+        self.pub_race_cmd = rospy.Publisher("ctrl_cmd", Twist, queue_size=1)
+        self.pub_vis = rospy.Publisher(
+            "/follower_vis", MarkerArray, queue_size=10)
 
     def _is_validate(self, dist_left, dist_right):
         if dist_left > 4.0 or dist_right > 4.0:
@@ -37,7 +42,8 @@ class APP():
         elif (dist_left + dist_right) <= self.receiver_width or (dist_left + self.receiver_width) <= dist_right or (
                 dist_right + self.receiver_width) <= dist_left:
             print("Sonic follower : Fatal Error: Cannot make Triangle")
-            print("--> width:{} left:{} right:{}".format(self.receiver_width, dist_left, dist_right))
+            print("--> width:{} left:{} right:{}".format(self.receiver_width,
+                                                         dist_left, dist_right))
             return False
         self.target_cnt = 0
         return True
@@ -49,12 +55,19 @@ class APP():
         dist_right = msg.right / 1000.0
         if not self._is_validate(dist_left, dist_right):
             return
-        dist, angle = self._get_dis_angle(self.receiver_width, dist_left, dist_right)
+        dist, angle = self._get_dis_angle(
+            self.receiver_width, dist_left, dist_right)
         # print angle
-        msg_ctrl = self._get_cmd_ctrl(dist, angle)
-        self.pub_cmd.publish(msg_ctrl)
-        if self.if_vis:
-            self._visualize_(dist, angle)
+        if self.vehicle == "yunle_car":
+            msg_ctrl = self._get_cmd_ctrl(dist, angle)
+            self.pub_yunle_cmd.publish(msg_ctrl)
+            if self.if_vis:
+                self._visualize_(dist, angle)
+        elif self.vehicle == "race_car":
+            msg_ctrl = self._get_cmd_ctrl(dist, angle)
+            self.pub_race_cmd.publish(msg_ctrl)
+            if self.if_vis:
+                self._visualize_(dist, angle)
 
     def _get_dis_angle(self, width, l_left, l_right):
         width = float(width)
@@ -64,7 +77,8 @@ class APP():
         p = (width + l_left + l_right) / 2
         S = np.sqrt(p * (p - width) * (p - l_left) * (p - l_right))
         dis = 2 * S / width
-        l_midline = np.sqrt(l_left * l_left / 2 + l_right * l_right / 2 - width * width / 4)
+        l_midline = np.sqrt(l_left * l_left / 2 + l_right *
+                            l_right / 2 - width * width / 4)
         angle = np.arccos(dis / l_midline)
         if l_left < l_right:
             return dis, -angle
@@ -72,18 +86,27 @@ class APP():
             return dis, angle
 
     def _get_cmd_ctrl(self, dist, angle):
-        msg_ecu = ecu()
-        if dist < 1.0:
-            msg_ecu.motor = 0.0
-            msg_ecu.shift = ecu().SHIFT_N
+        if self.vehicle == "yunle_car":
+            msg_ecu = ecu()
+            if dist < 1.0:
+                msg_ecu.motor = 0.0
+                msg_ecu.shift = ecu().SHIFT_N
+                return msg_ecu
+            msg_ecu.motor = 2.0
+            if angle > 0:
+                msg_ecu.steer = angle / 0.06 * 140
+            else:
+                msg_ecu.steer = angle / 0.06 * 93
+            msg_ecu.shift = ecu().SHIFT_D
             return msg_ecu
-        msg_ecu.motor = 2.0
-        if angle > 0:
-            msg_ecu.steer = angle / 0.06 * 140
-        else:
-            msg_ecu.steer = angle / 0.06 * 93
-        msg_ecu.shift = ecu().SHIFT_D
-        return msg_ecu
+        elif self.vehicle == "race_car":
+            msg_twist = Twist()
+            if dist < 1.0:
+                msg_twist.linear.x = 0.0
+                return msg_twist
+            msg_twist.linear.x = 1.0
+            msg_twist.angular.z = angle
+            return msg_twist
 
     def _visualize_(self, dist, angle):
         marker_left = utils.CUBE()
@@ -143,7 +166,7 @@ class APP():
         text.text = " dist: {} \n angle: {}".format(dist, angle)
         text.pose.position.x = 4.0
         text.pose.position.y = 4.0
-        text.scale.x = text.scale.y=text.scale.z = 0.3
+        text.scale.x = text.scale.y = text.scale.z = 0.3
         msg_vis.markers.append(text)
 
         self.pub_vis.publish(msg_vis)
