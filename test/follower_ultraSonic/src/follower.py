@@ -22,6 +22,18 @@ class APP():
         self.if_vis = rospy.get_param("~visualize", False)
         self.vehicle = rospy.get_param("~vehicle_type", "yunle_car")
 
+    def _pub_stop_cmd(self):
+        if self.vehicle == "yunle_car":
+            msg_ecu = ecu()
+            msg_ecu.motor = 0.0
+            msg_ecu.shift = ecu().SHIFT_N
+            self.pub_yunle_cmd.publish(msg_ecu)
+        elif self.vehicle == "race_car":
+            msg_twist = Twist()
+            msg_twist.linear.x = 1.0
+            msg_twist.angular.z = 0.0
+            self.pub_race_cmd.publish(msg_twist)
+
     def _add_sub_(self):
         rospy.Subscriber(self.sonic_topic, DiffSonic,
                          self._sonic_handler, queue_size=1)
@@ -38,12 +50,14 @@ class APP():
             if self.target_cnt > 50:
                 print("sonic_follower : No target detected !")
                 self.target_cnt = 0
+            self._pub_stop_cmd()
             return False
         elif (dist_left + dist_right) <= self.receiver_width or (dist_left + self.receiver_width) <= dist_right or (
                 dist_right + self.receiver_width) <= dist_left:
             print("Sonic follower : Fatal Error: Cannot make Triangle")
             print("--> width:{} left:{} right:{}".format(self.receiver_width,
                                                          dist_left, dist_right))
+            self._pub_stop_cmd()
             return False
         self.target_cnt = 0
         return True

@@ -35,7 +35,7 @@ int main(int argc, char** argv)
     smartcar_msgs::DiffSonic msg_sonic;
 
     serial::Serial sp_left;
-    serial::Timeout to = serial::Timeout::simpleTimeout(100);
+    serial::Timeout to = serial::Timeout::simpleTimeout(20);
     sp_left.setPort(port_left);
     sp_left.setBaudrate(115200);
     sp_left.setTimeout(to);
